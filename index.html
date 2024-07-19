@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mongz Music Player - Digital Wave</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+      <div class="music-player">
+        <nav>
+            <div class="circle">
+              <span class="material-icons">music</span>
+            </div>
+            <div class="circle">
+                <span class="material-icons">menu</span>
+            </div>
+        </nav>
+        <img src="media/aka.jpg" class="song-img">
+        <h1>Lemons(Lemonade)</h1>
+        <p>AKA ft Nasty C</p>
+        <audio id="song">
+           <source src="media/AKA-Nasty-C-Lemons.mp3" type="audio/mpeg">
+        </audio>
+        <input type="range" value="0" id="progress">
+        <div class="controls">
+           <div onclick="prevTrack()"><span class="material-icons">skip_previous</span></div>
+           <div onclick="playPause()"><span class="material-icons" id="ctrlIcon">play_arrow</span></div>
+           <div onclick="nextTrack()"><span class="material-icons">skip_next</span></div>
+        </div>      
+      </div>
+  </div>
+
+  <script>
+   let progress = document.getElementById("progress");
+   let song = document.getElementById("song");
+   let ctrlIcon = document.getElementById("ctrlIcon");
+
+   const playlist = [
+     { title: "Lemons", artist: "AKA ft Nasty C", src: "media/AKA-Nasty-C-Lemons.mp3", img: "media/aka.jpg" },
+     { title: "Ulele", artist: "Oscar_Mbo", src: "media/Oscar_Mbo-Ulele.mp3", img: "media/oscar.jpeg" },
+     { title: "Hlasela", artist: "sjava-hlasela", src: "media/sjava-hlasela.mp3", img: "media/sjava 1.jpeg" },
+     { title: "Time", artist: "sjava-time", src: "media/sjava-time.mp3", img: "media/sjava 2.jpeg" }
+   ];
+
+   let currentTrackIndex = 0;
+
+   function loadTrack(index) {
+     const track = playlist[index];
+     song.src = track.src;
+     document.querySelector('.song-img').src = track.img;
+     document.querySelector('.music-player h1').textContent = track.title;
+     document.querySelector('.music-player p').textContent = track.artist;
+     song.play();
+     ctrlIcon.textContent = "pause";
+   }
+
+   function playPause() {
+     if (song.paused) {
+       song.play();
+       ctrlIcon.textContent = "pause";
+     } else {
+       song.pause();
+       ctrlIcon.textContent = "play_arrow";
+     }
+   }
+
+   function nextTrack() {
+     currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+     loadTrack(currentTrackIndex);
+   }
+
+   function prevTrack() {
+     currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+     loadTrack(currentTrackIndex);
+   }
+
+   song.addEventListener('ended', nextTrack);
+
+   song.onloadedmetadata = function(){
+     progress.max = song.duration;
+     progress.value = song.currentTime;
+   }
+
+   setInterval(() => {
+     progress.value = song.currentTime;
+   }, 500);
+
+   progress.onchange = function(){
+     song.currentTime = progress.value;
+     if (song.paused) {
+       song.play();
+       ctrlIcon.textContent = "pause";
+     }
+   }
+
+   window.onload = function() {
+     loadTrack(currentTrackIndex);
+   };
+  </script>
+</body>
+</html>
+
