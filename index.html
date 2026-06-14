@@ -38,6 +38,7 @@
    let song = document.getElementById("song");
    let ctrlIcon = document.getElementById("ctrlIcon");
    let authIndicator = document.getElementById("authIndicator");
+   let cachedFirebaseAuthKey = "";
 
    const playlist = [
      { title: "Lemons", artist: "AKA ft Nasty C", src: "media/AKA-Nasty-C-Lemons.mp3", img: "media/aka.jpg" },
@@ -94,10 +95,19 @@
        if (user) return user;
      }
 
+     if (cachedFirebaseAuthKey) {
+       const cachedUser = extractUser(safeParse(localStorage.getItem(cachedFirebaseAuthKey)));
+       if (cachedUser) return cachedUser;
+       cachedFirebaseAuthKey = "";
+     }
+
      for (const key of Object.keys(localStorage)) {
        if (key.startsWith("firebase:authUser:")) {
          const user = extractUser(safeParse(localStorage.getItem(key)));
-         if (user) return user;
+         if (user) {
+           cachedFirebaseAuthKey = key;
+           return user;
+         }
        }
      }
 
@@ -126,7 +136,7 @@
      if (isSafeAvatarUrl(user.photo)) {
        const avatar = document.createElement("img");
        avatar.src = user.photo;
-       avatar.alt = `Profile picture of ${user.name || "user"}`;
+       avatar.alt = `Profile picture of ${user.name || user.email || "user"}`;
        avatar.className = "auth-avatar";
        authIndicator.appendChild(avatar);
      } else {
