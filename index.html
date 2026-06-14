@@ -13,7 +13,7 @@
             <div class="circle">
               <span class="material-icons">music</span>
             </div>
-            <div id="authIndicator" class="auth-indicator" aria-live="polite"></div>
+            <div id="authIndicator" class="auth-indicator" aria-live="polite" aria-label="User authentication status"></div>
             <div class="circle">
                 <span class="material-icons">menu</span>
             </div>
@@ -58,12 +58,28 @@
    }
 
    function extractUser(candidate) {
-     if (!candidate || typeof candidate !== "object") return null;
-     const name = candidate.displayName || candidate.name || candidate.fullName || "";
-     const email = candidate.email || candidate.mail || "";
-     const photo = candidate.photoURL || candidate.photoUrl || candidate.picture || candidate.avatar || "";
+     if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return null;
+     const name = typeof (candidate.displayName || candidate.name || candidate.fullName) === "string"
+       ? (candidate.displayName || candidate.name || candidate.fullName).trim()
+       : "";
+     const email = typeof (candidate.email || candidate.mail) === "string"
+       ? (candidate.email || candidate.mail).trim()
+       : "";
+     const photo = typeof (candidate.photoURL || candidate.photoUrl || candidate.picture || candidate.avatar) === "string"
+       ? (candidate.photoURL || candidate.photoUrl || candidate.picture || candidate.avatar).trim()
+       : "";
      if (!name && !email) return null;
      return { name, email, photo };
+   }
+
+   function isSafeAvatarUrl(url) {
+     if (!url) return false;
+     try {
+       const parsed = new URL(url, window.location.origin);
+       return parsed.protocol === "https:" || parsed.protocol === "http:";
+     } catch {
+       return false;
+     }
    }
 
    function getStoredUser() {
@@ -101,10 +117,10 @@
      const display = user.name || user.email;
      const secondary = user.name && user.email ? user.email : "";
 
-     if (user.photo) {
+     if (isSafeAvatarUrl(user.photo)) {
        const avatar = document.createElement("img");
        avatar.src = user.photo;
-       avatar.alt = "Profile picture";
+       avatar.alt = `Profile picture of ${user.name || "user"}`;
        avatar.className = "auth-avatar";
        authIndicator.appendChild(avatar);
      } else {
