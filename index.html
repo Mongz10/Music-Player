@@ -13,7 +13,7 @@
             <div class="circle">
               <span class="material-icons">music</span>
             </div>
-            <div id="authIndicator" class="auth-indicator" aria-live="polite" aria-label="User authentication status"></div>
+            <div id="authIndicator" class="auth-indicator" aria-live="polite"></div>
             <div class="circle">
                 <span class="material-icons">menu</span>
             </div>
@@ -80,7 +80,7 @@
      if (!url) return false;
      try {
        const parsed = new URL(url, window.location.origin);
-       return parsed.protocol === "https:" || parsed.protocol === "http:";
+       return parsed.protocol === "https:";
      } catch {
        return false;
      }
@@ -109,6 +109,7 @@
      const user = getStoredUser();
      authIndicator.replaceChildren();
      if (!user) {
+       authIndicator.setAttribute("aria-label", "Authentication status: guest user");
        const icon = document.createElement("span");
        icon.className = "material-icons";
        icon.textContent = "account_circle";
@@ -120,6 +121,7 @@
 
      const primaryText = user.name || user.email;
      const secondary = user.name && user.email ? user.email : "";
+     authIndicator.setAttribute("aria-label", `Authentication status: signed in as ${primaryText}`);
 
      if (isSafeAvatarUrl(user.photo)) {
        const avatar = document.createElement("img");
