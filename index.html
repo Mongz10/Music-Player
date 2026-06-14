@@ -57,17 +57,21 @@
      }
    }
 
+   function getFirstStringField(source, keys) {
+     for (const key of keys) {
+       if (typeof source[key] === "string") {
+         const value = source[key].trim();
+         if (value) return value;
+       }
+     }
+     return "";
+   }
+
    function extractUser(candidate) {
      if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return null;
-     const name = typeof (candidate.displayName || candidate.name || candidate.fullName) === "string"
-       ? (candidate.displayName || candidate.name || candidate.fullName).trim()
-       : "";
-     const email = typeof (candidate.email || candidate.mail) === "string"
-       ? (candidate.email || candidate.mail).trim()
-       : "";
-     const photo = typeof (candidate.photoURL || candidate.photoUrl || candidate.picture || candidate.avatar) === "string"
-       ? (candidate.photoURL || candidate.photoUrl || candidate.picture || candidate.avatar).trim()
-       : "";
+     const name = getFirstStringField(candidate, ["displayName", "name", "fullName"]);
+     const email = getFirstStringField(candidate, ["email", "mail"]);
+     const photo = getFirstStringField(candidate, ["photoURL", "photoUrl", "picture", "avatar"]);
      if (!name && !email) return null;
      return { name, email, photo };
    }
@@ -114,7 +118,7 @@
        return;
      }
 
-     const display = user.name || user.email;
+     const primaryText = user.name || user.email;
      const secondary = user.name && user.email ? user.email : "";
 
      if (isSafeAvatarUrl(user.photo)) {
@@ -133,7 +137,7 @@
      const text = document.createElement("span");
      text.className = "auth-text";
      const strong = document.createElement("strong");
-     strong.textContent = display;
+     strong.textContent = primaryText;
      text.appendChild(strong);
 
      if (secondary) {
