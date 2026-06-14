@@ -13,6 +13,7 @@
             <div class="circle">
               <span class="material-icons">music</span>
             </div>
+            <div id="authIndicator" class="auth-indicator" aria-live="polite"></div>
             <div class="circle">
                 <span class="material-icons">menu</span>
             </div>
@@ -36,6 +37,7 @@
    let progress = document.getElementById("progress");
    let song = document.getElementById("song");
    let ctrlIcon = document.getElementById("ctrlIcon");
+   let authIndicator = document.getElementById("authIndicator");
 
    const playlist = [
      { title: "Lemons", artist: "AKA ft Nasty C", src: "media/AKA-Nasty-C-Lemons.mp3", img: "media/aka.jpg" },
@@ -45,6 +47,87 @@
    ];
 
    let currentTrackIndex = 0;
+
+   function safeParse(value) {
+     if (!value || typeof value !== "string") return null;
+     try {
+       return JSON.parse(value);
+     } catch {
+       return null;
+     }
+   }
+
+   function extractUser(candidate) {
+     if (!candidate || typeof candidate !== "object") return null;
+     const name = candidate.displayName || candidate.name || candidate.fullName || "";
+     const email = candidate.email || candidate.mail || "";
+     const photo = candidate.photoURL || candidate.photoUrl || candidate.picture || candidate.avatar || "";
+     if (!name && !email) return null;
+     return { name, email, photo };
+   }
+
+   function getStoredUser() {
+     const directKeys = ["loggedInUser", "authUser", "currentUser", "googleUser", "user"];
+     for (const key of directKeys) {
+       const parsed = safeParse(localStorage.getItem(key)) || safeParse(sessionStorage.getItem(key));
+       const user = extractUser(parsed);
+       if (user) return user;
+     }
+
+     for (const key of Object.keys(localStorage)) {
+       if (key.startsWith("firebase:authUser:")) {
+         const user = extractUser(safeParse(localStorage.getItem(key)));
+         if (user) return user;
+       }
+     }
+
+     return null;
+   }
+
+   function renderAuthIndicator() {
+     if (!authIndicator) return;
+     const user = getStoredUser();
+     authIndicator.replaceChildren();
+     if (!user) {
+       const icon = document.createElement("span");
+       icon.className = "material-icons";
+       icon.textContent = "account_circle";
+       const label = document.createElement("span");
+       label.textContent = "Guest";
+       authIndicator.append(icon, label);
+       return;
+     }
+
+     const display = user.name || user.email;
+     const secondary = user.name && user.email ? user.email : "";
+
+     if (user.photo) {
+       const avatar = document.createElement("img");
+       avatar.src = user.photo;
+       avatar.alt = "Profile picture";
+       avatar.className = "auth-avatar";
+       authIndicator.appendChild(avatar);
+     } else {
+       const icon = document.createElement("span");
+       icon.className = "material-icons";
+       icon.textContent = "account_circle";
+       authIndicator.appendChild(icon);
+     }
+
+     const text = document.createElement("span");
+     text.className = "auth-text";
+     const strong = document.createElement("strong");
+     strong.textContent = display;
+     text.appendChild(strong);
+
+     if (secondary) {
+       const secondaryText = document.createElement("small");
+       secondaryText.textContent = secondary;
+       text.appendChild(secondaryText);
+     }
+
+     authIndicator.appendChild(text);
+   }
 
    function loadTrack(index) {
      const track = playlist[index];
@@ -96,9 +179,9 @@
    }
 
    window.onload = function() {
+     renderAuthIndicator();
      loadTrack(currentTrackIndex);
    };
   </script>
 </body>
 </html>
-

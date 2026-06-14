@@ -27,6 +27,8 @@
 nav {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    gap: 12px;
     margin-bottom: 30px;
 }
 
@@ -44,6 +46,48 @@ nav .circle {
 
 nav .circle:hover {
     transform: scale(1.1);
+}
+
+.auth-indicator {
+    min-height: 40px;
+    max-width: 210px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #fff;
+    color: #000;
+    box-shadow: 0 5px 10px rgba(255, 26, 26, 0.22);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.auth-indicator .material-icons {
+    font-size: 22px;
+}
+
+.auth-text {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 11px;
+    line-height: 1.2;
+    text-align: left;
+}
+
+.auth-text strong,
+.auth-text small {
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.auth-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 .song-img {
