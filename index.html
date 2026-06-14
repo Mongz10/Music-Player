@@ -13,6 +13,7 @@
             <div class="circle">
               <span class="material-icons">music</span>
             </div>
+            <div id="authIndicator" class="auth-indicator" aria-live="polite"></div>
             <div class="circle">
                 <span class="material-icons">menu</span>
             </div>
@@ -36,6 +37,8 @@
    let progress = document.getElementById("progress");
    let song = document.getElementById("song");
    let ctrlIcon = document.getElementById("ctrlIcon");
+   let authIndicator = document.getElementById("authIndicator");
+   let cachedFirebaseAuthStorageKey = "";
 
    const playlist = [
      { title: "Lemons", artist: "AKA ft Nasty C", src: "media/AKA-Nasty-C-Lemons.mp3", img: "media/aka.jpg" },
@@ -45,6 +48,129 @@
    ];
 
    let currentTrackIndex = 0;
+
+   function safeParse(value) {
+     if (!value || typeof value !== "string") return null;
+     try {
+       return JSON.parse(value);
+     } catch {
+       return null;
+     }
+   }
+
+   function getFirstStringField(source, keys) {
+     for (const key of keys) {
+       if (typeof source[key] === "string") {
+         const value = source[key].trim();
+         if (value) return value;
+       }
+     }
+     return "";
+   }
+
+   function extractUser(candidate) {
+     if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return null;
+     const name = getFirstStringField(candidate, ["displayName", "name", "fullName"]);
+     const email = getFirstStringField(candidate, ["email", "mail"]);
+     const photo = getFirstStringField(candidate, ["photoURL", "photoUrl", "picture", "avatar"]);
+     if (!name && !email) return null;
+     return { name, email, photo };
+   }
+
+   function isSafeAvatarUrl(url) {
+     if (!url) return false;
+     try {
+       const parsed = new URL(url, window.location.origin);
+       if (parsed.protocol !== "https:") return false;
+
+       const trustedHosts = [
+         window.location.hostname,
+         "lh3.googleusercontent.com",
+         "lh4.googleusercontent.com",
+         "lh5.googleusercontent.com",
+         "lh6.googleusercontent.com",
+         "avatars.githubusercontent.com"
+       ];
+
+       return trustedHosts.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
+     } catch {
+       return false;
+     }
+   }
+
+   function getStoredUser() {
+     const directKeys = ["loggedInUser", "authUser", "currentUser", "googleUser", "user"];
+     for (const key of directKeys) {
+       const parsed = safeParse(localStorage.getItem(key)) || safeParse(sessionStorage.getItem(key));
+       const user = extractUser(parsed);
+       if (user) return user;
+     }
+
+     if (cachedFirebaseAuthStorageKey) {
+       const cachedUser = extractUser(safeParse(localStorage.getItem(cachedFirebaseAuthStorageKey)));
+       if (cachedUser) return cachedUser;
+       cachedFirebaseAuthStorageKey = "";
+     }
+
+     for (const key of Object.keys(localStorage)) {
+       if (key.startsWith("firebase:authUser:")) {
+         const user = extractUser(safeParse(localStorage.getItem(key)));
+         if (user) {
+           cachedFirebaseAuthStorageKey = key;
+           return user;
+         }
+       }
+     }
+
+     return null;
+   }
+
+   function renderAuthIndicator() {
+     if (!authIndicator) return;
+     const user = getStoredUser();
+     authIndicator.replaceChildren();
+     if (!user) {
+       authIndicator.setAttribute("aria-label", "Authentication status: guest user");
+       const icon = document.createElement("span");
+       icon.className = "material-icons";
+       icon.textContent = "account_circle";
+       const label = document.createElement("span");
+       label.textContent = "Guest";
+       authIndicator.append(icon, label);
+       return;
+     }
+
+     const primaryText = user.name || user.email;
+     const secondary = user.name && user.email ? user.email : "";
+     authIndicator.setAttribute("aria-label", `Authentication status: signed in as ${primaryText}`);
+
+     if (isSafeAvatarUrl(user.photo)) {
+       const avatar = document.createElement("img");
+       avatar.src = user.photo;
+       avatar.alt = `Profile picture of ${user.name || user.email || "user"}`;
+       avatar.className = "auth-avatar";
+       authIndicator.appendChild(avatar);
+     } else {
+       const icon = document.createElement("span");
+       icon.className = "material-icons";
+       icon.textContent = "account_circle";
+       authIndicator.appendChild(icon);
+     }
+
+     const text = document.createElement("span");
+     text.className = "auth-text";
+     const strong = document.createElement("strong");
+     strong.textContent = primaryText;
+     text.appendChild(strong);
+
+     if (secondary) {
+       const secondaryText = document.createElement("small");
+       secondaryText.textContent = secondary;
+       text.appendChild(secondaryText);
+     }
+
+     authIndicator.appendChild(text);
+   }
 
    function loadTrack(index) {
      const track = playlist[index];
@@ -96,9 +222,9 @@
    }
 
    window.onload = function() {
+     renderAuthIndicator();
      loadTrack(currentTrackIndex);
    };
   </script>
 </body>
 </html>
-
