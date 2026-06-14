@@ -38,7 +38,7 @@
    let song = document.getElementById("song");
    let ctrlIcon = document.getElementById("ctrlIcon");
    let authIndicator = document.getElementById("authIndicator");
-   let cachedFirebaseAuthKey = "";
+   let cachedFirebaseAuthStorageKey = "";
 
    const playlist = [
      { title: "Lemons", artist: "AKA ft Nasty C", src: "media/AKA-Nasty-C-Lemons.mp3", img: "media/aka.jpg" },
@@ -81,7 +81,18 @@
      if (!url) return false;
      try {
        const parsed = new URL(url, window.location.origin);
-       return parsed.protocol === "https:";
+       if (parsed.protocol !== "https:") return false;
+
+       const trustedHosts = [
+         window.location.hostname,
+         "lh3.googleusercontent.com",
+         "lh4.googleusercontent.com",
+         "lh5.googleusercontent.com",
+         "lh6.googleusercontent.com",
+         "avatars.githubusercontent.com"
+       ];
+
+       return trustedHosts.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
      } catch {
        return false;
      }
@@ -95,17 +106,17 @@
        if (user) return user;
      }
 
-     if (cachedFirebaseAuthKey) {
-       const cachedUser = extractUser(safeParse(localStorage.getItem(cachedFirebaseAuthKey)));
+     if (cachedFirebaseAuthStorageKey) {
+       const cachedUser = extractUser(safeParse(localStorage.getItem(cachedFirebaseAuthStorageKey)));
        if (cachedUser) return cachedUser;
-       cachedFirebaseAuthKey = "";
+       cachedFirebaseAuthStorageKey = "";
      }
 
      for (const key of Object.keys(localStorage)) {
        if (key.startsWith("firebase:authUser:")) {
          const user = extractUser(safeParse(localStorage.getItem(key)));
          if (user) {
-           cachedFirebaseAuthKey = key;
+           cachedFirebaseAuthStorageKey = key;
            return user;
          }
        }
